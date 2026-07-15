@@ -1,0 +1,138 @@
+<main class="shell">
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">F</div>
+      <div>
+        <p class="eyebrow">FPSBUDDY</p>
+        <p class="brand-name">Helper</p>
+      </div>
+    </div>
+    <span class="version">Desktop utility · v0.1</span>
+  </header>
+
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow accent">SYSTEM SNAPSHOT</p>
+      <h1>Know what your rig can do.</h1>
+      <p class="hero-text">
+        Scan the static hardware and software details FPSBuddy needs for accurate performance guidance.
+        Nothing is uploaded until you review it and choose to share.
+      </p>
+      <button class="primary-button" type="button" (click)="scan()" [disabled]="scanState === 'scanning'">
+        <span class="button-icon">{{ scanState === "scanning" ? "..." : "↗" }}</span>
+        {{ scanState === "scanning" ? "Scanning your system" : snapshot ? "Scan again" : "Scan this PC" }}
+      </button>
+      @if (scanState === "scanning") {
+        <p class="status-line"><span class="pulse"></span> Reading local system information</p>
+      }
+      @if (scanState === "error") {
+        <p class="error-line">{{ errorMessage }}</p>
+      }
+    </div>
+    <div class="hero-orbit" aria-hidden="true">
+      <div class="orbit orbit-one"></div>
+      <div class="orbit orbit-two"></div>
+      <div class="orbit-core">FPS</div>
+    </div>
+  </section>
+
+  @if (snapshot) {
+    <section class="snapshot-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow accent">REVIEW BEFORE SYNC</p>
+          <h2>Your system snapshot</h2>
+        </div>
+        <p class="captured">Captured {{ formatCapturedAt(snapshot.capturedAt) }}</p>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card highlight">
+          <span class="card-label">PROCESSOR</span>
+          <strong>{{ displayValue(snapshot.cpu.model || snapshot.cpu.brand) }}</strong>
+          <span>{{ displayValue(snapshot.cpu.coreCount) }} cores · {{ snapshot.cpu.threadCount }} threads</span>
+        </article>
+        <article class="stat-card">
+          <span class="card-label">MEMORY</span>
+          <strong>{{ snapshot.memory.totalGb }} GB</strong>
+          <span>{{ displayValue(snapshot.memory.memoryType) }} · {{ displayValue(snapshot.memory.speedMts) }} MT/s</span>
+        </article>
+        <article class="stat-card">
+          <span class="card-label">OPERATING SYSTEM</span>
+          <strong>{{ displayValue(snapshot.operatingSystem.name) }}</strong>
+          <span>{{ displayValue(snapshot.operatingSystem.version) }} · build {{ displayValue(snapshot.operatingSystem.build) }}</span>
+        </article>
+      </div>
+
+      <div class="detail-grid">
+        <article class="detail-card">
+          <div class="detail-header">
+            <span class="detail-icon">GPU</span>
+            <div><h3>Graphics</h3><p>Detected adapters and driver status</p></div>
+          </div>
+          @for (gpu of snapshot.gpus; track $index) {
+            <div class="detail-row"><span>{{ displayValue(gpu.model || gpu.vendor) }}</span><strong>{{ displayValue(gpu.vramGb) }} GB VRAM</strong></div>
+            <div class="detail-row muted"><span>Driver</span><strong>{{ displayValue(gpu.driverVersion) }}</strong></div>
+          }
+        </article>
+        <article class="detail-card">
+          <div class="detail-header">
+            <span class="detail-icon">DISK</span>
+            <div><h3>Storage</h3><p>Capacity by detected device</p></div>
+          </div>
+          @for (disk of snapshot.storage; track $index) {
+            <div class="detail-row"><span>{{ displayKind(disk.kind) }}</span><strong>{{ disk.capacityGb }} GB</strong></div>
+          } @empty {
+            <div class="empty-row">No storage details available.</div>
+          }
+        </article>
+        <article class="detail-card">
+          <div class="detail-header">
+            <span class="detail-icon">CPU</span>
+            <div><h3>Processor detail</h3><p>Architecture and available clocks</p></div>
+          </div>
+          <div class="detail-row"><span>Architecture</span><strong>{{ snapshot.cpu.architecture }}</strong></div>
+          <div class="detail-row"><span>Base clock</span><strong>{{ displayValue(snapshot.cpu.baseClockGhz) }} GHz</strong></div>
+          <div class="detail-row"><span>Boost clock</span><strong>{{ displayValue(snapshot.cpu.boostClockGhz) }} GHz</strong></div>
+        </article>
+        <article class="detail-card">
+          <div class="detail-header">
+            <span class="detail-icon">DISPLAY</span>
+            <div><h3>Display</h3><p>Screen information for future tuning</p></div>
+          </div>
+          @for (display of snapshot.displays; track $index) {
+            <div class="detail-row"><span>{{ displayValue(display.resolution) }}</span><strong>{{ displayValue(display.refreshRateHz) }} Hz</strong></div>
+          }
+        </article>
+      </div>
+
+      <div class="consent-panel">
+        <div class="consent-copy">
+          <span class="consent-mark">✓</span>
+          <div><h3>Share this hardware snapshot</h3><p>Only the values above will be sent. No serial numbers, file paths, running apps, or game data are collected.</p></div>
+        </div>
+        <label class="consent-toggle">
+          <input type="checkbox" [checked]="consentGiven" (change)="consentGiven = $any($event.target).checked" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="sync-footer">
+        <div><span class="ready-dot"></span><span>Snapshot ready · {{ snapshot.schemaVersion }}</span></div>
+        <button class="secondary-button" type="button" (click)="sync()" [disabled]="!consentGiven || syncState === 'syncing'">
+          {{ syncState === "syncing" ? "Syncing..." : syncState === "success" ? "Synced" : "Sync to FPSBuddy" }} <span>→</span>
+        </button>
+      </div>
+      @if (syncState === "success" || syncState === "error") {
+        <p class="sync-message" [class.sync-error]="syncState === 'error'"><span class="ready-dot"></span>{{ syncMessage }}</p>
+      }
+    </section>
+  } @else {
+    <section class="empty-state">
+      <div class="empty-line"></div>
+      <p>Run a scan to see your processor, graphics, memory, storage, operating system, and display information.</p>
+    </section>
+  }
+
+  <footer class="footer"><span>FPSBuddy Helper</span><span>Static information only in this version</span></footer>
+</main>

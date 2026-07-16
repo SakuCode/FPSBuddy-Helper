@@ -9,7 +9,7 @@ The desktop shell is built with [Tauri 2](https://tauri.app/) and the interface 
 1. Select **Scan this PC** to collect a local hardware snapshot.
 2. Review the detected processor, graphics adapters, memory, storage, operating system, and displays.
 3. Enable the sharing consent control.
-4. Select **Sync to FPSBuddy** to send the reviewed snapshot to `https://fpsbuddy.io/api/helper/sync`.
+4. Select **Sync to FPSBuddy** to send the reviewed snapshot to `https://www.fpsbuddy.io/api/helper/sync`.
 5. After a successful sync, complete the benchmark form in Helper. Hardware is prefilled when it can be matched to the FPSBuddy catalog; ambiguous hardware requires manual confirmation.
 6. Submit the game, settings, FPS results, and optional advanced metrics directly to FPSBuddy.
 
@@ -81,7 +81,7 @@ src-tauri/
 - The sync request contains the snapshot, an anonymous locally stored user ID, and `hardwareShareOptIn: true`.
 - The anonymous ID is stored in browser local storage under `fpsbuddy.helper.anonymous-user-id`.
 - The sync response returns a one-use verification token used by the direct benchmark submission request.
-- Helper loads catalog choices from `https://fpsbuddy.io/api/helper/catalog` and submits to `https://fpsbuddy.io/api/helper/submit`.
+- Helper loads catalog choices from `https://www.fpsbuddy.io/api/helper/catalog` and submits to `https://www.fpsbuddy.io/api/helper/submit`.
 - Guest submissions use the locally stored anonymous ID and require a display name. The server endpoint also accepts a validated bearer token for the account-pairing flow that will be added next.
 - The current Helper submission stores the normalized benchmark fields in `user_benchmarks`; the raw hardware snapshot remains in `helper_hardware_snapshots`.
 - The sync and submission state are currently defined in `src/app/app.component.ts`.

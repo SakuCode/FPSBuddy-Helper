@@ -5,11 +5,12 @@ type ScanState = "idle" | "scanning" | "ready" | "error";
 type SyncState = "idle" | "syncing" | "success" | "error";
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
-const SYNC_ENDPOINT = "https://fpsbuddy.io/api/helper/sync";
+const FPSBUDDY_ORIGIN = "https://www.fpsbuddy.io";
+const SYNC_ENDPOINT = `${FPSBUDDY_ORIGIN}/api/helper/sync`;
 const ANONYMOUS_USER_ID_KEY = "fpsbuddy.helper.anonymous-user-id";
-const SUBMIT_URL = "https://fpsbuddy.io/submit";
-const CATALOG_ENDPOINT = "https://fpsbuddy.io/api/helper/catalog";
-const SUBMIT_ENDPOINT = "https://fpsbuddy.io/api/helper/submit";
+const SUBMIT_URL = `${FPSBUDDY_ORIGIN}/submit`;
+const CATALOG_ENDPOINT = `${FPSBUDDY_ORIGIN}/api/helper/catalog`;
+const SUBMIT_ENDPOINT = `${FPSBUDDY_ORIGIN}/api/helper/submit`;
 
 interface CatalogItem { id: string; name: string; }
 interface CatalogGame { slug: string; name: string; genre: string; }
@@ -135,8 +136,17 @@ export class AppComponent {
           hardwareShareOptIn: true,
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; code?: string; verificationToken?: string };
-      if (!response.ok || !result.ok) throw new Error(result.code ?? "SYNC_FAILED");
+      const result = (await response.json()) as { ok?: boolean; code?: string; reason?: string; verificationToken?: string };
+      if (!response.ok || !result.ok) {
+        const reason = result.reason === "HELPER_SNAPSHOT_TABLE_MISSING"
+          ? "The FPSBuddy database is missing the Helper snapshot table. Apply the Helper migrations and redeploy the web app."
+          : result.reason === "HELPER_SNAPSHOT_SCHEMA_OUTDATED"
+            ? "The FPSBuddy database has an older Helper snapshot schema. Apply the latest Helper migrations and redeploy the web app."
+            : result.reason === "DATABASE_INSERT_FAILED"
+              ? "FPSBuddy could not save the snapshot. Check the web server database configuration and try again."
+              : result.code ?? "SYNC_FAILED";
+        throw new Error(reason);
+      }
       this.verificationToken = result.verificationToken ?? "";
       this.syncState = "success";
       this.syncMessage = "Hardware snapshot synced to FPSBuddy.";
@@ -144,7 +154,7 @@ export class AppComponent {
       await this.loadCatalog();
     } catch (error) {
       this.syncState = "error";
-      this.syncMessage = error instanceof Error ? error.message : "The snapshot could not be synced.";
+      this.syncMessage = this.networkErrorMessage(error, "The snapshot could not be synced.");
     }
   }
 
@@ -204,7 +214,7 @@ export class AppComponent {
       this.submitMessage = result.verified ? "Benchmark submitted and verified." : "Benchmark submitted to FPSBuddy.";
     } catch (error) {
       this.submitState = "error";
-      this.submitMessage = error instanceof Error ? error.message : "The benchmark could not be submitted.";
+      this.submitMessage = this.networkErrorMessage(error, "The benchmark could not be submitted.");
     }
   }
 
@@ -238,6 +248,13 @@ export class AppComponent {
     const generated = crypto.randomUUID();
     localStorage.setItem(ANONYMOUS_USER_ID_KEY, generated);
     return generated;
+  }
+
+  private networkErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+      return "FPSBuddy could not be reached. Check your internet connection and try again.";
+    }
+    return error instanceof Error ? error.message : fallback;
   }
 
   displayValue(value: string | number | null | undefined): string {

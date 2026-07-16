@@ -10,9 +10,10 @@ The desktop shell is built with [Tauri 2](https://tauri.app/) and the interface 
 2. Review the detected processor, graphics adapters, memory, storage, operating system, and displays.
 3. Enable the sharing consent control.
 4. Select **Sync to FPSBuddy** to send the reviewed snapshot to `https://fpsbuddy.io/api/helper/sync`.
-5. After a successful sync, use the verification link to continue to FPSBuddy's benchmark submission flow.
+5. After a successful sync, complete the benchmark form in Helper. Hardware is prefilled when it can be matched to the FPSBuddy catalog; ambiguous hardware requires manual confirmation.
+6. Submit the game, settings, FPS results, and optional advanced metrics directly to FPSBuddy.
 
-The scan itself does not upload data. The current version collects static information only; it does not collect serial numbers, file paths, running applications, or game data. Sync is disabled until the user opts in.
+The scan itself does not upload data. The current version collects static information only; it does not collect serial numbers, file paths, running applications, or automatically detect game data. Sync is disabled until the user opts in. Game selection, settings, and performance results are entered manually for now.
 
 ## Requirements
 
@@ -79,8 +80,11 @@ src-tauri/
 - The Angular app invokes the native `collect_hardware` command through Tauri.
 - The sync request contains the snapshot, an anonymous locally stored user ID, and `hardwareShareOptIn: true`.
 - The anonymous ID is stored in browser local storage under `fpsbuddy.helper.anonymous-user-id`.
-- The sync response can return a verification token used to create the benchmark submission URL.
-- The sync and submission endpoints are currently defined in `src/app/app.component.ts`.
+- The sync response returns a one-use verification token used by the direct benchmark submission request.
+- Helper loads catalog choices from `https://fpsbuddy.io/api/helper/catalog` and submits to `https://fpsbuddy.io/api/helper/submit`.
+- Guest submissions use the locally stored anonymous ID and require a display name. The server endpoint also accepts a validated bearer token for the account-pairing flow that will be added next.
+- The current Helper submission stores the normalized benchmark fields in `user_benchmarks`; the raw hardware snapshot remains in `helper_hardware_snapshots`.
+- The sync and submission state are currently defined in `src/app/app.component.ts`.
 
 Review the snapshot and consent behavior before changing the sync payload or the fields collected by the native layer. Changes to the snapshot shape should stay aligned between `src-tauri/src/hardware.rs` and `src/app/app.component.ts`.
 

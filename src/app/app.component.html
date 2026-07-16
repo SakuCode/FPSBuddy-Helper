@@ -7,7 +7,7 @@
         <p class="brand-subtitle">Helper</p>
       </div>
     </div>
-    <span class="version">Desktop utility · v0.2</span>
+    <span class="version">Desktop utility · v0.2.2</span>
   </header>
 
   <section class="hero">
@@ -117,7 +117,56 @@
         <p class="sync-message" [class.sync-error]="syncState === 'error'"><span class="ready-dot"></span>{{ syncMessage }}</p>
       }
       @if (syncState === "success" && verificationToken) {
-        <a class="benchmark-link" [href]="benchmarkUrl" target="_blank" rel="noreferrer">Continue to verified benchmark submission <span>→</span></a>
+        <section class="benchmark-form">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow accent">BENCHMARK SUBMISSION</p>
+              <h2>Complete your result</h2>
+            </div>
+            <span class="captured">Hardware is attached</span>
+          </div>
+
+          @if (catalogState === "loading") { <p class="sync-message">Loading games and hardware choices...</p> }
+          @if (catalogState === "error") {
+            <div class="form-alert">Catalog data could not be loaded. <button type="button" class="text-button" (click)="loadCatalog()">Retry</button></div>
+          }
+
+          @if (catalog) {
+            <div class="form-grid">
+              <label><span>Display name</span><input [value]="draft.submitter" (input)="draft.submitter = $any($event.target).value" placeholder="e.g. hexbyte" maxlength="40" /></label>
+              <label><span>CPU confirmation</span><select [value]="draft.cpuId" (change)="draft.cpuId = $any($event.target).value"><option value="">Choose detected CPU</option>@for (cpu of catalog.cpus; track cpu.id) { <option [value]="cpu.id">{{ cpu.name }}</option> }</select></label>
+              <label><span>GPU confirmation</span><select [value]="draft.gpuId" (change)="draft.gpuId = $any($event.target).value"><option value="">Choose detected GPU</option>@for (gpu of catalog.gpus; track gpu.id) { <option [value]="gpu.id">{{ gpu.name }}</option> }</select></label>
+              <label><span>RAM (GB)</span><input type="number" min="4" max="256" [value]="draft.ramGb" (input)="draft.ramGb = +$any($event.target).value" /></label>
+              <label><span>Game</span><select [value]="draft.gameSlug" (change)="draft.gameSlug = $any($event.target).value"><option value="">Choose a game</option>@for (game of catalog.games; track game.slug) { <option [value]="game.slug">{{ game.name }}</option> }</select></label>
+              <label><span>Resolution</span><select [value]="draft.resolution" (change)="draft.resolution = $any($event.target).value"><option>1080p</option><option>1440p</option><option>4K</option></select></label>
+              <label><span>Preset</span><select [value]="draft.preset" (change)="draft.preset = $any($event.target).value"><option>Low</option><option>Medium</option><option>High</option><option>Ultra</option></select></label>
+              <label><span>Driver version</span><input [value]="draft.driverVersion" (input)="draft.driverVersion = $any($event.target).value" maxlength="20" /></label>
+              <label><span>OS version</span><input [value]="draft.osVersion" (input)="draft.osVersion = $any($event.target).value" maxlength="40" /></label>
+              <label><span>Game version</span><input [value]="draft.gameVersion" (input)="draft.gameVersion = $any($event.target).value" maxlength="40" /></label>
+              <label><span>Upscaler</span><select [value]="draft.upscaler" (change)="draft.upscaler = $any($event.target).value"><option value="">Not specified</option><option>none</option><option>dlss</option><option>fsr</option><option>xess</option></select></label>
+              <label><span>Upscaler mode</span><select [value]="draft.upscalerMode" (change)="draft.upscalerMode = $any($event.target).value"><option value="">Not specified</option><option>quality</option><option>balanced</option><option>performance</option><option>ultra_perf</option><option>native</option></select></label>
+              <label><span>Frame generation</span><select [value]="draft.frameGeneration" (change)="draft.frameGeneration = $any($event.target).value"><option value="">Not specified</option><option>off</option><option>dlss3</option><option>fsr3</option><option>xess</option></select></label>
+              <label><span>Ray tracing</span><select [value]="draft.rayTracing" (change)="draft.rayTracing = $any($event.target).value"><option value="">Not specified</option><option>off</option><option>low</option><option>medium</option><option>high</option><option>ultra</option><option>psycho</option></select></label>
+              <label><span>Texture quality</span><select [value]="draft.textureQuality" (change)="draft.textureQuality = $any($event.target).value"><option value="">Not specified</option><option>low</option><option>medium</option><option>high</option><option>ultra</option></select></label>
+              <label><span>Shadow quality</span><select [value]="draft.shadowQuality" (change)="draft.shadowQuality = $any($event.target).value"><option value="">Not specified</option><option>low</option><option>medium</option><option>high</option><option>ultra</option></select></label>
+            </div>
+
+            <div class="form-grid results-grid">
+              <label><span>Average FPS</span><input type="number" min="5" max="800" [value]="draft.avgFps || ''" (input)="draft.avgFps = +$any($event.target).value" /></label>
+              <label><span>1% low FPS</span><input type="number" min="1" max="800" [value]="draft.low1pct || ''" (input)="draft.low1pct = +$any($event.target).value" /></label>
+              <label><span>Median FPS</span><input type="number" min="0" max="800" [value]="draft.medianFps || ''" (input)="draft.medianFps = +$any($event.target).value" /></label>
+              <label><span>0.1% low FPS</span><input type="number" min="0" max="800" [value]="draft.low0p1pctFps || ''" (input)="draft.low0p1pctFps = +$any($event.target).value" /></label>
+              <label><span>CPU utilization %</span><input type="number" min="0" max="100" [value]="draft.cpuUtilAvgPct || ''" (input)="draft.cpuUtilAvgPct = +$any($event.target).value" /></label>
+              <label><span>GPU utilization %</span><input type="number" min="0" max="100" [value]="draft.gpuUtilAvgPct || ''" (input)="draft.gpuUtilAvgPct = +$any($event.target).value" /></label>
+              <label><span>CPU temperature C</span><input type="number" min="0" max="150" [value]="draft.cpuTempC || ''" (input)="draft.cpuTempC = +$any($event.target).value" /></label>
+              <label><span>GPU temperature C</span><input type="number" min="0" max="150" [value]="draft.gpuTempC || ''" (input)="draft.gpuTempC = +$any($event.target).value" /></label>
+            </div>
+            <div class="check-row"><label><input type="checkbox" [checked]="draft.vsync" (change)="draft.vsync = $any($event.target).checked" /> V-Sync</label><label><input type="checkbox" [checked]="draft.hdrEnabled" (change)="draft.hdrEnabled = $any($event.target).checked" /> HDR</label></div>
+            <label class="wide-field"><span>Notes</span><textarea rows="3" maxlength="500" [value]="draft.notes" (input)="draft.notes = $any($event.target).value" placeholder="DLSS Quality, custom fan curve, benchmark scene..."></textarea></label>
+            <div class="form-actions"><button type="button" class="secondary-button" (click)="loadCatalog()">Refresh choices</button><button type="button" class="primary-button" (click)="submit()" [disabled]="submitState === 'submitting' || submitState === 'success'">{{ submitState === "submitting" ? "Submitting..." : submitState === "success" ? "Submitted" : "Submit benchmark" }}</button></div>
+            @if (submitMessage) { <p class="sync-message" [class.sync-error]="submitState === 'error'"><span class="ready-dot"></span>{{ submitMessage }}</p> }
+          }
+        </section>
       }
     </section>
   } @else {

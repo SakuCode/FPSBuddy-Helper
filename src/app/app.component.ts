@@ -6,6 +6,7 @@ type SyncState = "idle" | "syncing" | "success" | "error";
 
 const SYNC_ENDPOINT = "https://fpsbuddy.io/api/helper/sync";
 const ANONYMOUS_USER_ID_KEY = "fpsbuddy.helper.anonymous-user-id";
+const SUBMIT_URL = "https://fpsbuddy.io/submit";
 
 interface HardwareSnapshot {
   schemaVersion: string;
@@ -61,6 +62,7 @@ export class AppComponent {
   errorMessage = "";
   syncState: SyncState = "idle";
   syncMessage = "";
+  verificationToken = "";
 
   async scan(): Promise<void> {
     this.scanState = "scanning";
@@ -91,14 +93,19 @@ export class AppComponent {
           hardwareShareOptIn: true,
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; code?: string };
+      const result = (await response.json()) as { ok?: boolean; code?: string; verificationToken?: string };
       if (!response.ok || !result.ok) throw new Error(result.code ?? "SYNC_FAILED");
+      this.verificationToken = result.verificationToken ?? "";
       this.syncState = "success";
       this.syncMessage = "Hardware snapshot synced to FPSBuddy.";
     } catch (error) {
       this.syncState = "error";
       this.syncMessage = error instanceof Error ? error.message : "The snapshot could not be synced.";
     }
+  }
+
+  get benchmarkUrl(): string {
+    return this.verificationToken ? `${SUBMIT_URL}?helperToken=${encodeURIComponent(this.verificationToken)}` : SUBMIT_URL;
   }
 
   private getAnonymousUserId(): string {

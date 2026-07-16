@@ -116,6 +116,9 @@
       @if (syncState === "success" || syncState === "error") {
         <p class="sync-message" [class.sync-error]="syncState === 'error'"><span class="ready-dot"></span>{{ syncMessage }}</p>
       }
+      @if (syncState === "success" && verificationToken) {
+        <a class="benchmark-link" [href]="benchmarkUrl" target="_blank" rel="noreferrer">Continue to verified benchmark submission <span>→</span></a>
+      }
     </section>
   } @else {
     <section class="empty-state">

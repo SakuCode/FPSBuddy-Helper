@@ -2,8 +2,6 @@ name: Release FPSBuddy Helper
 
 on:
   push:
-    branches:
-      - master
     tags:
       - "v*"
 

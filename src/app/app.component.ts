@@ -114,6 +114,7 @@ export class AppComponent {
     try {
       this.snapshot = await invoke<HardwareSnapshot>("collect_hardware");
       this.scanState = "ready";
+      await this.loadCatalog();
     } catch (error) {
       this.scanState = "error";
       this.errorMessage = error instanceof Error ? error.message : "The hardware scan could not be completed.";
@@ -229,13 +230,26 @@ export class AppComponent {
 
   private applyDetectedHardware(): void {
     if (!this.snapshot || !this.catalog) return;
-    const cpuName = (this.snapshot.cpu.model || this.snapshot.cpu.brand || "").toLowerCase();
-    const gpuName = (this.snapshot.gpus[0]?.model || "").toLowerCase();
-    this.draft.cpuId = this.catalog.cpus.find((item) => cpuName.includes(item.name.toLowerCase()) || item.name.toLowerCase().includes(cpuName))?.id ?? this.draft.cpuId;
-    this.draft.gpuId = this.catalog.gpus.find((item) => gpuName.includes(item.name.toLowerCase()) || item.name.toLowerCase().includes(gpuName))?.id ?? this.draft.gpuId;
+    const cpuName = this.normalizeHardwareName(this.snapshot.cpu.model || this.snapshot.cpu.brand || "");
+    const gpuName = this.normalizeHardwareName(this.snapshot.gpus[0]?.model || "");
+    const findCatalogMatch = (detectedName: string, items: CatalogItem[]): string | undefined => {
+      const normalizedItems = items.map((item) => ({ item, name: this.normalizeHardwareName(item.name) }));
+      return normalizedItems.find(({ name }) => name === detectedName)?.item.id
+        ?? normalizedItems.find(({ name }) => detectedName.includes(name))?.item.id;
+    };
+    this.draft.cpuId = findCatalogMatch(cpuName, this.catalog.cpus) ?? this.draft.cpuId;
+    this.draft.gpuId = findCatalogMatch(gpuName, this.catalog.gpus) ?? this.draft.gpuId;
     this.draft.ramGb = Math.max(4, Math.round(this.snapshot.memory.totalGb));
     this.draft.driverVersion = this.snapshot.gpus[0]?.driverVersion ?? this.draft.driverVersion;
     this.draft.osVersion = [this.snapshot.operatingSystem.name, this.snapshot.operatingSystem.version].filter(Boolean).join(" ");
+  }
+
+  private normalizeHardwareName(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/\s+\d+(?:-core| core) processor\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   get benchmarkUrl(): string {

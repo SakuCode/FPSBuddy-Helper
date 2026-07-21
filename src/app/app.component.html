@@ -7,7 +7,7 @@
         <p class="brand-subtitle">Helper</p>
       </div>
     </div>
-    <span class="version">Desktop utility · v0.2.4</span>
+    <span class="version">Desktop utility · v0.2.5</span>
   </header>
 
   <section class="hero">
@@ -134,8 +134,8 @@
           @if (catalog) {
             <div class="form-grid">
               <label><span>Display name</span><input [value]="draft.submitter" (input)="draft.submitter = $any($event.target).value" placeholder="e.g. hexbyte" maxlength="40" /></label>
-              <label><span>CPU confirmation</span><select [value]="draft.cpuId" (change)="draft.cpuId = $any($event.target).value"><option value="">Choose detected CPU</option>@for (cpu of catalog.cpus; track cpu.id) { <option [value]="cpu.id">{{ cpu.name }}</option> }</select></label>
-              <label><span>GPU confirmation</span><select [value]="draft.gpuId" (change)="draft.gpuId = $any($event.target).value"><option value="">Choose detected GPU</option>@for (gpu of catalog.gpus; track gpu.id) { <option [value]="gpu.id">{{ gpu.name }}</option> }</select></label>
+              <label><span>CPU confirmation</span><select [value]="draft.cpuId" (change)="draft.cpuId = $any($event.target).value"><option value="">Choose detected CPU</option>@for (cpu of catalog.cpus; track cpu.id) { <option [value]="cpu.id" [selected]="cpu.id === draft.cpuId">{{ cpu.name }}</option> }</select></label>
+              <label><span>GPU confirmation</span><select [value]="draft.gpuId" (change)="draft.gpuId = $any($event.target).value"><option value="">Choose detected GPU</option>@for (gpu of catalog.gpus; track gpu.id) { <option [value]="gpu.id" [selected]="gpu.id === draft.gpuId">{{ gpu.name }}</option> }</select></label>
               <label><span>RAM (GB)</span><input type="number" min="4" max="256" [value]="draft.ramGb" (input)="draft.ramGb = +$any($event.target).value" /></label>
               <label><span>Game</span><select [value]="draft.gameSlug" (change)="draft.gameSlug = $any($event.target).value"><option value="">Choose a game</option>@for (game of catalog.games; track game.slug) { <option [value]="game.slug">{{ game.name }}</option> }</select></label>
               <label><span>Resolution</span><select [value]="draft.resolution" (change)="draft.resolution = $any($event.target).value"><option>1080p</option><option>1440p</option><option>4K</option></select></label>

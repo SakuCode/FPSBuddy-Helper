@@ -2,7 +2,7 @@
 
 FPSBuddy Helper is a small desktop companion for FPSBuddy. It reads static hardware and operating system information from the local PC, shows the results for review, and lets the user explicitly share the snapshot with FPSBuddy for performance guidance and benchmark verification.
 
-The desktop shell is built with [Tauri 2](https://tauri.app/) and the interface is built with [Angular 20](https://angular.dev/). The native collector currently uses the Rust [`sysinfo`](https://crates.io/crates/sysinfo) crate.
+The desktop shell is built with [Tauri 2](https://tauri.app/) and the interface is built with [Angular 20](https://angular.dev/). The native collector uses the Rust [`sysinfo`](https://crates.io/crates/sysinfo) crate for general system data and Windows WMI/native display APIs for GPU adapters, VRAM, driver versions, and display refresh rate.
 
 ## Current workflow
 
